@@ -21,7 +21,7 @@ jobs:
       run: |
         ISSUE_BODY="${{ github.event.issue.body }}"
         DOWNLOAD_LINKS=$(echo "$ISSUE_BODY" | grep -oP '(http|https)://[^ ]+')
-        echo "::set-output name=download_link::$DOWNLOAD_LINKS"
+        echo "{download_link}={$DOWNLOAD_LINKS}" >> $GITHUB_OUTPUT
 
     - name: Download font
       id: download-file
@@ -51,12 +51,23 @@ jobs:
         git commit -m "Add downloaded file from issue #${{ github.event.issue.number }}"
         git push
     
+    - name: Comment the issue
+      run: |
+        ISSUE_NUMBER="${{ github.event.issue.number }}"
+        COMMENT_BODY="字体已成功处理，因缓存问题可能需要一段时间后才能生效"
+        gh issue comment $ISSUE_NUMBER --body "$COMMENT_BODY"
+      env:
+        GH_TOKEN: ${{ github.token }}
+  close-issue:
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs: download-and-upload
+    steps:
     - name: Comment and close the issue
       run: |
         ISSUE_NUMBER="${{ github.event.issue.number }}"
-        COMMENT_BODY="文件已处理完成"
+        COMMENT_BODY="此issue已处理完毕，如果你没有看到成功处理的信息，则可能出现了错误，请等待修复"
         gh issue comment $ISSUE_NUMBER --body "$COMMENT_BODY"
         gh issue close $ISSUE_NUMBER
       env:
         GH_TOKEN: ${{ github.token }}
-
