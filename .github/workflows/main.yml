@@ -21,7 +21,7 @@ jobs:
       run: |
         ISSUE_BODY="${{ github.event.issue.body }}"
         DOWNLOAD_LINKS=$(echo "$ISSUE_BODY" | grep -oP '(http|https)://[^ ]+')
-        echo "{download_link}={$DOWNLOAD_LINKS}" >> $GITHUB_OUTPUT
+        echo "{download_links}={$DOWNLOAD_LINKS}" >> $GITHUB_OUTPUT
 
     - name: Download font
       id: download-file
