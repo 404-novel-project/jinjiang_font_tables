@@ -1,0 +1,62 @@
+name: Download and Upload Files from Issue
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  download-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: clone environment
+      run: |
+        git clone https://github.com/404-novel-project/font_tables_lib
+
+    - name: Extract download link from issue
+      id: extract-links
+      run: |
+        ISSUE_BODY="${{ github.event.issue.body }}"
+        DOWNLOAD_LINKS=$(echo "$ISSUE_BODY" | grep -oP '(http|https)://[^ ]+')
+        echo "::set-output name=download_link::$DOWNLOAD_LINKS"
+
+    - name: Download font
+      id: download-file
+      run: |
+        cd font_tables_lib
+        mkdir sample_font 
+        cd sample_font
+        DOWNLOAD_LINKS="${{ steps.extract-links.outputs.download_links }}"
+        for LINK in $DOWNLOAD_LINKS; do
+          wget "$LINK"
+        done
+
+    - name: process font
+      run: |
+        cd font_tables_lib
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade Pillow
+        pip install -r requirements.txt
+        python main.py
+        mv gen/* ../
+        cd ../
+        rm -rf font_tables_lib
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git pull
+        git add *
+        git commit -m "Add downloaded file from issue #${{ github.event.issue.number }}"
+        git push
+    
+    - name: Comment and close the issue
+      run: |
+        ISSUE_NUMBER="${{ github.event.issue.number }}"
+        COMMENT_BODY="文件已处理完成"
+        gh issue comment $ISSUE_NUMBER --body "$COMMENT_BODY"
+        gh issue close $ISSUE_NUMBER
+      env:
+        GH_TOKEN: ${{ github.token }}
+

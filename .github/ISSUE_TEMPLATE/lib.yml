@@ -1,0 +1,12 @@
+name: 番茄小说下载功能字体缺失报告
+description: 请直接在输入框中填写缺失的字体链接，一个issue只能提交一个字体链接，如果有多个字体缺失，请分别提交多个issue。
+title: "[Add font]: "
+body:
+  - type: textarea
+    id: font
+    attributes:
+      label: 请填写缺失的字体链接
+      description: 请填写缺失的字体链接
+      placeholder: 请填写缺失的字体链接
+    validations:
+      required: true
